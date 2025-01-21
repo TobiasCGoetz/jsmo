@@ -5,7 +5,6 @@ export class Tile {
     this.currentState = 0; // Start with the first image
     this.active = false;
     this.updateBackground();
-    this.element.addEventListener("click", () => this.planMove());
   }
 
   setActive(isActive) {
