@@ -65,6 +65,7 @@ async function startGame() {
   playerState.Name = nameField.value;
   await api.addPlayer(playerState.Name);
   //Set up data polling
+  updateSurroundings();
   setInterval(updateSurroundings, updateSurroundingsInterval);
   setInterval(updatePlayer, updatePlayerInterval);
   setInterval(updateConfig, updateConfigInterval);

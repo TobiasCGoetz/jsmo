@@ -4,15 +4,14 @@ export class Tile {
     this.images = images;
     this.active = false;
 
-    this.currentState = "EDGE";
+    this.currentState = "";
+    this.updateType("EDGE");
     this.zombieCount = 0;
     this.playerCount = 0;
     this.playersPlanMoveNorth = 0;
     this.playersPlanMoveEast = 0;
     this.playersPlanMoveSouth = 0;
     this.playersPlanMoveWest = 0;
-
-    this.updateType(this.currentState);
   }
 
   setActive(isActive) {
@@ -38,13 +37,16 @@ export class Tile {
   }
 
   updateType(type) {
-    this.flash();
+    if (this.currentState == type) {
+      return;
+    }
     this.element.style.backgroundImage = `url(${this.images[type]})`;
+    this.flash();
     this.currentState = type;
   }
 
   flash() {
-    this.element.style.opacity = 0.5;
-    setTimeout(() => (this.element.style.opacity = 1), 200);
+    this.element.style.opacity = 0.2;
+    setTimeout(() => (this.element.style.opacity = 1), 400);
   }
 }
