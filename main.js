@@ -6,6 +6,19 @@ const grid2x2 = document.getElementById("grid2x2");
 
 const allTiles = document.querySelectorAll(".tile"); // Select all tiles
 
+const overlay = document.getElementById("myOverlay");
+const closeOverlayButton = document.getElementById("closeOverlay");
+
+function showOverlay() {
+  overlay.style.display = "flex";
+}
+
+function hideOverlay() {
+  overlay.style.display = "none";
+}
+
+closeOverlayButton.addEventListener("click", hideOverlay);
+
 allTiles.forEach((tile) => {
   tile.addEventListener("click", () => toggleColor(tile));
 });
@@ -53,3 +66,11 @@ const api = new GameAPI("http://localhost:8080");
     console.error("API Error:", error);
   }
 })();
+
+/*
+// To show the overlay:
+document.getElementById("myOverlay").style.display = "flex";
+
+// To hide the overlay:
+document.getElementById("myOverlay").style.display = "none";
+*/

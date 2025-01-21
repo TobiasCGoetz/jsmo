@@ -7,23 +7,30 @@
         <link rel="stylesheet" href="style.css" defer />
         <script type="module" src="main.js"></script>
     </head>
+    <div class="overlay" id="myOverlay">
+        <div class="overlay-content">
+            <h1>This is the overlay content</h1>
+            <p>It appears above everything else.</p>
+            <button id="closeOverlay">Close</button>
+        </div>
+    </div>
     <body>
         <div class="container grid-3x3" id="grid3x3">
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
+            <div id="NW" class="tile"></div>
+            <div id="NN" class="tile"></div>
+            <div id="NE" class="tile"></div>
+            <div id="WW" class="tile"></div>
+            <div id="CE" class="tile"></div>
+            <div id="EE" class="tile"></div>
+            <div id="SW" class="tile"></div>
+            <div id="SS" class="tile"></div>
+            <div id="SE" class="tile"></div>
         </div>
         <div class="container grid-2x2" id="grid2x2">
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
-            <div class="tile"></div>
+            <div id="bp1" class="tile"></div>
+            <div id="bp2" class="tile"></div>
+            <div id="bp3" class="tile"></div>
+            <div id="bp4" class="tile"></div>
         </div>
     </body>
 </html>

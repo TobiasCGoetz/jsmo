@@ -31,6 +31,9 @@ body {
 
 .tile {
     background-color: black;
+    background-size: contain; /* or contain, depending on your preference */
+    background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
     border: 1px solid gray;
     aspect-ratio: 1/1;
@@ -60,4 +63,22 @@ body {
     .grid-2x2 {
         margin-top: 20px;
     }
+}
+
+.overlay {
+    position: fixed; /* Stay in the same position relative to the viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(
+        60,
+        60,
+        60,
+        0.6
+    ); /* Semi-transparent black background (optional) */
+    z-index: 1000; /* Ensure it's on top of everything else */
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
 }
