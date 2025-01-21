@@ -8,7 +8,7 @@ const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
 var playerToken;
 
-const map = {
+const gameMap = {
   NW: document.getElementById("NW"),
   NN: document.getElementById("NN"),
   NE: document.getElementById("NE"),
@@ -32,18 +32,20 @@ async function startGame() {
 
 function tileClicked(event) {
   //Deactive all tiles
-  map.forEach((tile) => tile.setActive(false));
+  Object.entries(gameMap).forEach(([key, val]) =>
+    gameMap[key].setActive(false),
+  );
   //Activate the new one
-  map[event.target.id].setActive(true);
+  gameMap[event.target.id].setActive(true);
   //Send planned move to server
   //TODO
 }
 
 startGameButton.addEventListener("click", startGame);
 
-map.forEach((tile) => {
-  tile.addEventListener("click", (event) => tileClicked(event));
-});
+Object.entries(gameMap).forEach(([key, val]) =>
+  gameMap[key].addEventListener("click", (event) => tileClicked(event)),
+);
 
 document.addEventListener("DOMContentLoaded", () => {
   const tiles = document.querySelectorAll(".tile");
