@@ -63,3 +63,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })();
 */
+
+async function getConfig() {
+  const configDetails = await api.getAllConfig(playerToken);
+}
+
+async function updateSurroundings() {
+  const playerDetails = await api.getPlayer(playerToken);
+}

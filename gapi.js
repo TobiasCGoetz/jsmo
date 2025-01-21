@@ -14,9 +14,9 @@ export class GameAPI {
     return response.json();
   }
 
-  async getPlayer(id) {
+  async getPlayer(playerToken) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}`,
     );
     if (!response.ok) {
       throw new Error(`Failed to fetch player: ${response.statusText}`);
@@ -24,9 +24,9 @@ export class GameAPI {
     return response.json();
   }
 
-  async getPlayerSurroundings(id) {
+  async getPlayerSurroundings(playerToken) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}/surroundings`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}/surroundings`,
     );
     if (!response.ok) {
       throw new Error(`Failed to fetch surroundings: ${response.statusText}`);
@@ -34,9 +34,9 @@ export class GameAPI {
     return response.json();
   }
 
-  async setPlayerDirection(id, direction) {
+  async setPlayerDirection(playerToken, direction) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}/direction/${encodeURIComponent(direction)}`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}/direction/${encodeURIComponent(direction)}`,
       {
         method: "PUT",
       },
@@ -47,9 +47,9 @@ export class GameAPI {
     return response.status === 200;
   }
 
-  async setPlayerConsume(id, card) {
+  async setPlayerConsume(playerToken, card) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}/consume/${encodeURIComponent(card)}`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}/consume/${encodeURIComponent(card)}`,
       {
         method: "PUT",
       },
@@ -60,9 +60,9 @@ export class GameAPI {
     return response.status === 200;
   }
 
-  async setPlayerDiscard(id, card) {
+  async setPlayerDiscard(playerToken, card) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}/discard/${encodeURIComponent(card)}`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}/discard/${encodeURIComponent(card)}`,
       {
         method: "PUT",
       },
@@ -73,9 +73,9 @@ export class GameAPI {
     return response.status === 200;
   }
 
-  async setPlayerPlay(id, card) {
+  async setPlayerPlay(playerToken, card) {
     const response = await fetch(
-      `${this.baseURL}/player/${encodeURIComponent(id)}/play/${encodeURIComponent(card)}`,
+      `${this.baseURL}/player/${encodeURIComponent(playerToken)}/play/${encodeURIComponent(card)}`,
       {
         method: "PUT",
       },
