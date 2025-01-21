@@ -6,7 +6,8 @@ const startGameOverlay = document.getElementById("gameStartOverlay");
 const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
-var playerToken;
+var playerToken = "";
+const tileInstances = [];
 
 const gameMap = {
   NW: document.getElementById("NW"),
@@ -17,6 +18,18 @@ const gameMap = {
   SW: document.getElementById("SW"),
   SS: document.getElementById("SS"),
   SE: document.getElementById("SE"),
+};
+
+const inputMap = {
+  NN: "north",
+  WW: "west",
+  EE: "east",
+  SS: "south",
+  CE: "stay",
+  NW: null,
+  NE: null,
+  SW: null,
+  SE: null,
 };
 
 function hideOverlay() {
@@ -32,11 +45,13 @@ async function startGame() {
 
 function tileClicked(event) {
   //Deactive all tiles
-  Object.entries(gameMap).forEach(([key, val]) => val.setActive(false));
+  tileInstances.forEach((tile) => tile.setActive(false));
   //Activate the new one
   gameMap[event.target.id].setActive(true);
   //Send planned move to server
-  //TODO
+  if (inputMap[event.target.id]) {
+    api.setPlayerDirection(inputMap[event.target.id]);
+  }
 }
 
 startGameButton.addEventListener("click", startGame);
@@ -47,7 +62,6 @@ Object.entries(gameMap).forEach(([key, val]) =>
 
 document.addEventListener("DOMContentLoaded", () => {
   const tiles = document.querySelectorAll(".tile");
-  const tileInstances = [];
   const tileImages = [
     "img/forest.jpg",
     "img/farm.jpg",
