@@ -72,6 +72,9 @@ async function startGame() {
 }
 
 function tileClicked(event) {
+  if (!inputMap[event.target.id]) {
+    return;
+  }
   //Deactive all tiles
   for (const key in tileInstances) {
     tileInstances[key].setActive(false);
