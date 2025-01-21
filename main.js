@@ -37,11 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-function toggleColor(tile) {
-  tile.style.backgroundColor =
-    tile.style.backgroundColor === "black" ? "white" : "black";
-}
-
 const api = new GameAPI("http://localhost:8080");
 
 (async () => {
