@@ -32,9 +32,7 @@ async function startGame() {
 
 function tileClicked(event) {
   //Deactive all tiles
-  Object.entries(gameMap).forEach(([key, val]) =>
-    gameMap[key].setActive(false),
-  );
+  Object.entries(gameMap).forEach(([key, val]) => val.setActive(false));
   //Activate the new one
   gameMap[event.target.id].setActive(true);
   //Send planned move to server
@@ -44,7 +42,7 @@ function tileClicked(event) {
 startGameButton.addEventListener("click", startGame);
 
 Object.entries(gameMap).forEach(([key, val]) =>
-  gameMap[key].addEventListener("click", (event) => tileClicked(event)),
+  val.addEventListener("click", (event) => tileClicked(event)),
 );
 
 document.addEventListener("DOMContentLoaded", () => {
