@@ -1,5 +1,6 @@
 import { GameAPI } from "./gapi.js";
 import { Tile } from "./tile.js";
+import { Card } from "./card.js";
 
 const updateSurroundingsInterval = 5000;
 const updatePlayerInterval = 1000;
@@ -114,6 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
   allTiles.forEach((tileDiv) => {
     const tile = new Tile(tileDiv, tileImages);
     tileInstances[tileDiv.id] = tile;
+  });
+  allCards.forEach((cardDiv) => {
+    const card = new Card(cardDiv, cardImages);
   });
 });
 
