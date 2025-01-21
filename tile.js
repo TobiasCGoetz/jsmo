@@ -11,8 +11,10 @@ export class Tile {
     if (!isActive) {
       this.active = false;
       this.element.classList.remove("active");
+      this.element.classList.add("inactive");
     } else {
       this.active = true;
+      this.element.classList.remove("inactive");
       this.element.classList.add("active");
     }
   }

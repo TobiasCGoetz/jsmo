@@ -14,6 +14,7 @@ const gameMap = {
   NN: document.getElementById("NN"),
   NE: document.getElementById("NE"),
   WW: document.getElementById("WW"),
+  CE: document.getElementById("CE"),
   EE: document.getElementById("EE"),
   SW: document.getElementById("SW"),
   SS: document.getElementById("SS"),
@@ -49,7 +50,7 @@ function tileClicked(event) {
     tileInstances[key].setActive(false);
   }
   //Activate the new one
-  tileInstances[event.target].setActive(true);
+  tileInstances[event.target.id].setActive(true);
   //Send planned move to server
   if (inputMap[event.target.id]) {
     api.setPlayerDirection(inputMap[event.target.id]);
@@ -71,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
   allTiles.forEach((tileDiv) => {
     const tile = new Tile(tileDiv, tileImages);
-    tileInstances[tileDiv] = tile;
+    tileInstances[tileDiv.id] = tile;
   });
 });
 
