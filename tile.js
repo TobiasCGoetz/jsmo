@@ -2,9 +2,17 @@ export class Tile {
   constructor(element, images) {
     this.element = element;
     this.images = images;
-    this.currentState = 0; // Start with the first image
     this.active = false;
-    this.updateBackground();
+
+    this.currentState = "EDGE";
+    this.zombieCount = 0;
+    this.playerCount = 0;
+    this.playersPlanMoveNorth = 0;
+    this.playersPlanMoveEast = 0;
+    this.playersPlanMoveSouth = 0;
+    this.playersPlanMoveWest = 0;
+
+    this.updateType(this.currentState);
   }
 
   setActive(isActive) {
@@ -19,8 +27,20 @@ export class Tile {
     }
   }
 
-  updateBackground() {
-    this.element.style.backgroundImage = `url(${this.images[this.currentState]})`;
+  updateByContent(content) {
+    this.updateType(content["TileType"]);
+    this.zombieCount = content["ZombieCount"];
+    this.playerCount = content["PlayerCount"];
+    this.playersPlanMoveNorth = content["PlayersPlanMoveNorth"];
+    this.playersPlanMoveEast = content["PlayersPlanMoveEast"];
+    this.playersPlanMoveSouth = content["PlayersPlanMoveSouth"];
+    this.playersPlanMoveWest = content["PlayersPlanMoveWest"];
+  }
+
+  updateType(type) {
+    this.flash();
+    this.element.style.backgroundImage = `url(${this.images[type]})`;
+    this.currentState = type;
   }
 
   flash() {

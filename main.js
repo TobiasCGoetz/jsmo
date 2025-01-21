@@ -41,7 +41,8 @@ async function startGame() {
   hideOverlay();
   //Register Player and store token
   playerToken = await api.addPlayer(nameField.value);
-  //Set up endpoint polling
+  //Set up endpoint polling later
+  updateSurroundings();
 }
 
 function tileClicked(event) {
@@ -64,28 +65,71 @@ Object.entries(gameMap).forEach(([key, val]) =>
 );
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tileImages = [
-    "img/forest.jpg",
-    "img/farm.jpg",
-    "img/city.jpg",
-    "img/laboratory.jpg",
-  ];
+  const tileImages = {
+    Forest: "img/forest.jpg",
+    Farm: "img/farm.jpg",
+    City: "img/city.jpg",
+    Laboratory: "img/laboratory.jpg",
+    EDGE: "img/edge.jpg",
+  };
   allTiles.forEach((tileDiv) => {
     const tile = new Tile(tileDiv, tileImages);
     tileInstances[tileDiv.id] = tile;
   });
 });
 
-async function getPlayer() {
-  return await api.getPlayer(playerToken);
+/*
+{
+  "ID": "01948017-28cc-7d85-a569-1e742ea1c267",
+  "Name": "tobi",
+  "X": 35,
+  "Y": 34,
+  "Direction": "South",
+  "Play": "None",
+  "Consume": "None",
+  "Discard": "None",
+  "Cards": [
+    "Food",
+    "Wood",
+    "Wood",
+    "None",
+    "None"
+  ],
+  "Alive": true,
+  "IsBot": false
+}
+*/
+async function updatePlayer() {
+  var playerState = await api.getPlayer(playerToken);
+  console.log(playerState);
 }
 
 async function getConfig() {
   return await api.getAllConfig(playerToken);
 }
 
+/*
+{ NW: <Tile>, ... }
+
+<Tile>===={
+  "TileType": "Farm",
+  "ZombieCount": 0,
+  "PlayerCount": 1,
+  "PlayersPlanMoveNorth": 0,
+  "PlayersPlanMoveEast": 0,
+  "PlayersPlanMoveSouth": 1,
+  "PlayersPlanMoveWest": 0
+}
+*/
 async function updateSurroundings() {
-  return await api.getSurroundings(playerToken);
+  var surroundings = await api.getPlayerSurroundings(playerToken);
+  for (const key in surroundings) {
+    updateTile(key, surroundings[key]);
+  }
+}
+
+async function updateTile(id, content) {
+  tileInstances[id].updateByContent(content);
 }
 
 async function pollingData() {
