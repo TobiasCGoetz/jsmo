@@ -43,7 +43,7 @@ body {
 }
 
 .active {
-    border: 1px solid red;
+    border: 5px solid red;
 }
 
 /* Landscape layout */

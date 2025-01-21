@@ -16,8 +16,8 @@ export class GameAPI {
         method: "POST",
       },
     );
-    this.playerToken = response.json();
-    return response.json();
+    this.playerToken = await response.json();
+    return this.playerToken;
   }
 
   async getPlayer() {

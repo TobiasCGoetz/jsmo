@@ -10,10 +10,10 @@ export class Tile {
   setActive(isActive) {
     if (!isActive) {
       this.active = false;
-      this.classList.set("tile");
+      this.element.classList.remove("active");
     } else {
       this.active = true;
-      this.classList.set("tile active");
+      this.element.classList.add("active");
     }
   }
 

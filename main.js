@@ -7,7 +7,7 @@ const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
 var playerToken = "";
-const tileInstances = [];
+const tileInstances = {};
 
 const gameMap = {
   NW: document.getElementById("NW"),
@@ -45,9 +45,11 @@ async function startGame() {
 
 function tileClicked(event) {
   //Deactive all tiles
-  tileInstances.forEach((tile) => tile.setActive(false));
+  for (const key in tileInstances) {
+    tileInstances[key].setActive(false);
+  }
   //Activate the new one
-  gameMap[event.target.id].setActive(true);
+  tileInstances[event.target].setActive(true);
   //Send planned move to server
   if (inputMap[event.target.id]) {
     api.setPlayerDirection(inputMap[event.target.id]);
@@ -61,16 +63,15 @@ Object.entries(gameMap).forEach(([key, val]) =>
 );
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tiles = document.querySelectorAll(".tile");
   const tileImages = [
     "img/forest.jpg",
     "img/farm.jpg",
     "img/city.jpg",
     "img/laboratory.jpg",
   ];
-  tiles.forEach((tileElement) => {
-    const tile = new Tile(tileElement, tileImages);
-    tileInstances.push(tile);
+  allTiles.forEach((tileDiv) => {
+    const tile = new Tile(tileDiv, tileImages);
+    tileInstances[tileDiv] = tile;
   });
 });
 
