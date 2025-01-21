@@ -1,4 +1,5 @@
 import { GameAPI } from "./gapi.js";
+import { Tile } from './Tile.js';
 
 const grid3x3 = document.getElementById("grid3x3");
 const grid2x2 = document.getElementById("grid2x2");
@@ -7,6 +8,21 @@ const allTiles = document.querySelectorAll(".tile"); // Select all tiles
 
 allTiles.forEach((tile) => {
   tile.addEventListener("click", () => toggleColor(tile));
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+	const tiles = document.querySelectorAll('.tile');
+	const tileInstances = [];
+	const tileImages = [
+		'img/forest.jpg',
+		'img/farm.jpg',
+		'img/city.jpg',
+		'img/laboratory.jpg',
+	];
+	tiles.forEach(tileElement => {
+		const tile = new Tile(tileElement, tileImages);
+		tileInstances.push(tile);
+	});
 });
 
 function toggleColor(tile) {
