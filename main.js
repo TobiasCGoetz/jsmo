@@ -4,19 +4,22 @@ import { Tile } from "./tile.js";
 const allTiles = document.querySelectorAll(".tile"); // Select all tiles
 const startGameOverlay = document.getElementById("gameStartOverlay");
 const startGameButton = document.getElementById("startGameButton");
+const nameField = document.getElementById("nameInput");
+const api = new GameAPI("http://localhost:8080");
+var playerToken;
 
 function hideOverlay() {
   startGameOverlay.style.display = "none"; //"flex" to show again
 }
 
-function startGame() {
+async function startGame() {
   hideOverlay();
-  //Register Player
-  //Store token
+  //Register Player and store token
+  playerToken = await api.addPlayer(nameField.value);
   //Set up endpoint polling
 }
 
-startGameButton.addEventListener("click", hideOverlay);
+startGameButton.addEventListener("click", startGame);
 
 allTiles.forEach((tile) => {
   tile.addEventListener("click", () => toggleColor(tile));
@@ -37,8 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const api = new GameAPI("http://localhost:8080");
-
+/*
 (async () => {
   try {
     // Add a player
@@ -56,8 +58,8 @@ const api = new GameAPI("http://localhost:8080");
     // Get configuration
     const config = await api.getAllConfig();
     console.log("Game Config:", config);
-    */
   } catch (error) {
     console.error("API Error:", error);
   }
 })();
+*/
