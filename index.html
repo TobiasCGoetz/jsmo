@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Page</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-image: url('background.jpg');
+            background-size: cover; /* or contain, depending on your preference */
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .container {
+            display: grid;
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .grid-3x3 {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+
+        .grid-2x2 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .tile {
+            background-color: black;
+            cursor: pointer;
+            border: 1px solid gray;
+            aspect-ratio: 1/1;
+        }
+
+        /* Landscape layout */
+        @media (orientation: landscape) {
+            body {
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap; /* Allow wrapping if needed */
+            }
+
+            .container {
+                max-width: 45%; /* Reduce max-width to prevent overflow */
+                margin: 10px;
+            }
+
+            .grid-2x2 {
+                max-width: 30%;
+            }
+        }
+
+        /* Portrait adjustments */
+        @media (orientation: portrait) {
+            .grid-2x2 {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container grid-3x3" id="grid3x3">
+        </div>
+
+    <div class="container grid-2x2" id="grid2x2">
+    </div>
+
+    <script>
+        const grid3x3 = document.getElementById('grid3x3');
+        const grid2x2 = document.getElementById('grid2x2');
+
+        // Create tiles dynamically
+        for (let i = 0; i < 9; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.onclick = function() { toggleColor(this); };
+            grid3x3.appendChild(tile);
+        }
+
+        for (let i = 0; i < 4; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.onclick = function() { toggleColor(this); };
+            grid2x2.appendChild(tile);
+        }
+
+        const allTiles = document.querySelectorAll('.tile'); // Select all tiles
+
+        function toggleColor(tile) {
+            tile.style.backgroundColor = (tile.style.backgroundColor === "black") ? "white" : "black";
+        }
+
+        function changeRandomTileColor() {
+            const randomIndex = Math.floor(Math.random() * allTiles.length); // Generate random index
+            const randomTile = allTiles[randomIndex]; // Select random tile
+            randomTile.style.opacity = 0.5; // Briefly reduce opacity
+            toggleColor(randomTile);
+            setTimeout(() => randomTile.style.opacity = 1, 200);
+        }
+
+        setInterval(changeRandomTileColor, 5000); // Call function every 5 seconds
+
+    </script>
+
+</body>
+</html>
