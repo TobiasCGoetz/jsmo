@@ -71,15 +71,17 @@ async function startGame() {
   setInterval(updateConfig, updateConfigInterval);
 }
 
+function deactiveAllTiles() {
+  for (const key in tileInstances) {
+    tileInstances[key].setActive(false);
+  }
+}
+
 function tileClicked(event) {
   if (!inputMap[event.target.id]) {
     return;
   }
-  //Deactive all tiles
-  for (const key in tileInstances) {
-    tileInstances[key].setActive(false);
-  }
-  //Activate the new one
+  deactiveAllTiles();
   tileInstances[event.target.id].setActive(true);
   //Send planned move to server
   if (inputMap[event.target.id]) {
