@@ -22,16 +22,15 @@ function changeRandomTileColor() {
   setTimeout(() => (randomTile.style.opacity = 1), 200);
 }
 
-/*Example Usage
 const api = new GameAPI("http://localhost:8080");
 
 (async () => {
   try {
     // Add a player
-    const playerId = await api.addPlayer("PlayerName");
-    console.log("Added Player:", playerId);
+    const playerToken = await api.addPlayer("PlayerName");
+    console.log("Added Player:", playerToken);
 
-    // Get player details
+    /* Get player details
     const playerDetails = await api.getPlayer(playerId);
     console.log("Player Details:", playerDetails);
 
@@ -42,9 +41,10 @@ const api = new GameAPI("http://localhost:8080");
     // Get configuration
     const config = await api.getAllConfig();
     console.log("Game Config:", config);
+    */
   } catch (error) {
     console.error("API Error:", error);
   }
-  })(); */
+})();
 
 setInterval(changeRandomTileColor, 5000); // Call function every 5 seconds
