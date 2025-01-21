@@ -8,13 +8,13 @@ export class Tile {
     this.element.addEventListener("click", () => this.planMove());
   }
 
-  toggleActive() {
-    if (this.active) {
+  setActive(isActive) {
+    if (!isActive) {
       this.active = false;
-      this.classList.set("tile active");
+      this.classList.set("tile");
     } else {
       this.active = true;
-      this.classList.set("tile");
+      this.classList.set("tile active");
     }
   }
 
