@@ -1,12 +1,15 @@
 import { GameAPI } from "./gapi.js";
 import { Tile } from "./tile.js";
 
+const updateSurroundingsInterval = 5000;
+const updatePlayerInterval = 1000;
+const updateConfigInterval = 2000;
+
 const allTiles = document.querySelectorAll(".tile"); // Select all tiles
 const startGameOverlay = document.getElementById("gameStartOverlay");
 const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
-var playerToken = "";
 const tileInstances = {};
 
 const gameMap = {
@@ -33,6 +36,25 @@ const inputMap = {
   SE: null,
 };
 
+const playerState = {
+  Name: null,
+  X: 0,
+  Y: 0,
+  Direction: "Stay",
+  Play: "None",
+  Consume: "None",
+  Discard: "None",
+  Cards: ["None", "None", "None", "None", "None"],
+  Alive: false,
+  IsBot: false,
+};
+
+const gameState = {
+  TurnLength: 15,
+  TurnTime: 15,
+  HaveWon: false,
+};
+
 function hideOverlay() {
   startGameOverlay.style.display = "none"; //"flex" to show again
 }
@@ -40,9 +62,12 @@ function hideOverlay() {
 async function startGame() {
   hideOverlay();
   //Register Player and store token
-  playerToken = await api.addPlayer(nameField.value);
-  //Set up endpoint polling later
-  updateSurroundings();
+  playerState.Name = nameField.value;
+  await api.addPlayer(playerState.Name);
+  //Set up data polling
+  setInterval(updateSurroundings, updateSurroundingsInterval);
+  setInterval(updatePlayer, updatePlayerInterval);
+  setInterval(updateConfig, updateConfigInterval);
 }
 
 function tileClicked(event) {
@@ -78,51 +103,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-/*
-{
-  "ID": "01948017-28cc-7d85-a569-1e742ea1c267",
-  "Name": "tobi",
-  "X": 35,
-  "Y": 34,
-  "Direction": "South",
-  "Play": "None",
-  "Consume": "None",
-  "Discard": "None",
-  "Cards": [
-    "Food",
-    "Wood",
-    "Wood",
-    "None",
-    "None"
-  ],
-  "Alive": true,
-  "IsBot": false
-}
-*/
 async function updatePlayer() {
-  var playerState = await api.getPlayer(playerToken);
-  console.log(playerState);
+  var newState = await api.getPlayer();
+  for (const key in newState) {
+    playerState[key] = newState[key];
+  }
 }
 
-async function getConfig() {
-  return await api.getAllConfig(playerToken);
+async function updateConfig() {
+  var newConfig = await api.getAllConfig();
+  for (const key in newConfig) {
+    gameState[key] = newConfig[key];
+  }
+  console.log(gameState);
 }
 
-/*
-{ NW: <Tile>, ... }
-
-<Tile>===={
-  "TileType": "Farm",
-  "ZombieCount": 0,
-  "PlayerCount": 1,
-  "PlayersPlanMoveNorth": 0,
-  "PlayersPlanMoveEast": 0,
-  "PlayersPlanMoveSouth": 1,
-  "PlayersPlanMoveWest": 0
-}
-*/
 async function updateSurroundings() {
-  var surroundings = await api.getPlayerSurroundings(playerToken);
+  var surroundings = await api.getPlayerSurroundings();
   for (const key in surroundings) {
     updateTile(key, surroundings[key]);
   }
@@ -130,10 +127,4 @@ async function updateSurroundings() {
 
 async function updateTile(id, content) {
   tileInstances[id].updateByContent(content);
-}
-
-async function pollingData() {
-  const initialSurroundings = await getSurroundings();
-  const initialConfig = await getConfig();
-  const initialPlayer = await getPlayer();
 }
