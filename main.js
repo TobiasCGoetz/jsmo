@@ -104,6 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
     Laboratory: "img/laboratory.jpg",
     EDGE: "img/edge.jpg",
   };
+  const cardImages = {
+    Food: "img/food.jpg",
+    Wood: "img/wood.jpg",
+    Weapon: "img/gun.jpg",
+    Research: "dna.jpg",
+    None: "img/none.jpg",
+  };
   allTiles.forEach((tileDiv) => {
     const tile = new Tile(tileDiv, tileImages);
     tileInstances[tileDiv.id] = tile;
