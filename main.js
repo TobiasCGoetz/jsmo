@@ -5,7 +5,8 @@ const updateSurroundingsInterval = 5000;
 const updatePlayerInterval = 1000;
 const updateConfigInterval = 2000;
 
-const allTiles = document.querySelectorAll(".tile"); // Select all tiles
+const allTiles = document.querySelectorAll(".tile");
+const allCards = document.querySelectorAll(".card");
 const startGameOverlay = document.getElementById("gameStartOverlay");
 const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
