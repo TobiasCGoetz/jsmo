@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Food: "img/food.jpg",
     Wood: "img/wood.jpg",
     Weapon: "img/gun.jpg",
-    Research: "dna.jpg",
+    Research: "img/dna.jpg",
     None: "img/none.jpg",
   };
   allTiles.forEach((tileDiv) => {

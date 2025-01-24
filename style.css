@@ -29,9 +29,9 @@ body {
     grid-template-rows: repeat(2, 1fr);
 }
 
-.tile {
+.field {
     background-color: black;
-    background-size: contain; /* or contain, depending on your preference */
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     cursor: pointer;

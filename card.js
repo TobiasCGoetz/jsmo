@@ -1,8 +1,9 @@
-export class card {
+export class Card {
   constructor(element, images) {
     this.element = element;
     this.images = images;
-    this.currentState = "none";
+    this.currentState = "";
+    this.updateType("None");
   }
 
   setActive(isActive) {
@@ -14,6 +15,7 @@ export class card {
       return;
     }
     this.element.style.backgroundImage = `url(${this.images[type]})`;
+    console.log("Updated Card to", this.images[type]);
     this.flash();
     this.currentState = type;
   }
