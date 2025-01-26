@@ -79,6 +79,11 @@ function deactiveAllTiles() {
   }
 }
 
+function cardClicked(event) {
+  //Handle food, combat and uninteractive
+  return;
+}
+
 function tileClicked(event) {
   if (!inputMap[event.target.id]) {
     return;
@@ -93,8 +98,12 @@ function tileClicked(event) {
 
 startGameButton.addEventListener("click", startGame);
 
-Object.entries(gameMap).forEach(([key, val]) =>
+Object.entries(gameMap).forEach(([key, val]) => //Don't want all tiles here
   val.addEventListener("click", (event) => tileClicked(event)),
+);
+
+allCards.forEach((card) => 
+  card.addEventListener("click", (event) => cardClicked(event)),
 );
 
 document.addEventListener("DOMContentLoaded", () => {
