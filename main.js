@@ -86,6 +86,18 @@ function deactiveAllTiles() {
   }
 }
 
+function tileClicked(event) {
+  if (!inputMap[event.target.id]) {
+    return;
+  }
+  deactiveAllTiles();
+  tileInstances[event.target.id].setActive(true);
+  //Send planned move to server
+  if (inputMap[event.target.id]) {
+    api.setPlayerDirection(inputMap[event.target.id]);
+  }
+}
+
 function cardClicked(event) {
   //Handle food, combat and uninteractive
   //First, we get the type of the card
@@ -114,18 +126,6 @@ function cardClicked(event) {
       if (card.isActive) {
         card.toggle();
       }
-  }
-}
-
-function tileClicked(event) {
-  if (!inputMap[event.target.id]) {
-    return;
-  }
-  deactiveAllTiles();
-  tileInstances[event.target.id].setActive(true);
-  //Send planned move to server
-  if (inputMap[event.target.id]) {
-    api.setPlayerDirection(inputMap[event.target.id]);
   }
 }
 
