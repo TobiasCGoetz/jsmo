@@ -13,8 +13,25 @@ const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
 const tileInstances = {};
+const cardInstances = {};
 
 const directions = ["NW", "NN", "NE", "WW", "CE", "EE", "SW", "SS", "SE"];
+
+const tileImages = {
+  Forest: "img/forest.jpg",
+  Farm: "img/farm.jpg",
+  City: "img/city.jpg",
+  Laboratory: "img/laboratory.jpg",
+  EDGE: "img/edge.jpg",
+};
+
+const cardImages = {
+  Food: "img/food.jpg",
+  Wood: "img/wood.jpg",
+  Weapon: "img/gun.jpg",
+  Research: "img/dna.jpg",
+  None: "img/none.jpg",
+};
 
 const inputMap = {
   NN: "north",
@@ -71,8 +88,33 @@ function deactiveAllTiles() {
 
 function cardClicked(event) {
   //Handle food, combat and uninteractive
-  event.target.id;
-  return;
+  //First, we get the type of the card
+  //Then we branch off of it
+  //Food/Wood => Consume
+  //Weapon => Play
+  //Research => Deactivate the card again
+  const card = cardInstances[event.target.id];
+  const type = card.getType();
+  switch (type) {
+    case "Food":
+    case "Wood":
+      api.setPlayerConsume(type);
+      card.toggle();
+      return;
+    case "Weapon":
+      if (card.isActive) {
+        card.toggle();
+        api.setPlayerPlay("Dice");
+      } else {
+        card.toggle();
+        api.setPlayerPlay(type);
+      }
+      return;
+    case "Research":
+      if (card.isActive) {
+        card.toggle();
+      }
+  }
 }
 
 function tileClicked(event) {
@@ -100,26 +142,13 @@ allCards.forEach((card) =>
 );
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tileImages = {
-    Forest: "img/forest.jpg",
-    Farm: "img/farm.jpg",
-    City: "img/city.jpg",
-    Laboratory: "img/laboratory.jpg",
-    EDGE: "img/edge.jpg",
-  };
-  const cardImages = {
-    Food: "img/food.jpg",
-    Wood: "img/wood.jpg",
-    Weapon: "img/gun.jpg",
-    Research: "img/dna.jpg",
-    None: "img/none.jpg",
-  };
   allTiles.forEach((tileDiv) => {
     const tile = new Tile(tileDiv, tileImages);
     tileInstances[tileDiv.id] = tile;
   });
   allCards.forEach((cardDiv) => {
     const card = new Card(cardDiv, cardImages);
+    cardInstances[cardDiv.id] = card;
   });
 });
 
