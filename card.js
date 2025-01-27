@@ -6,8 +6,16 @@ export class Card {
     this.updateType("None");
   }
 
-  setActive(isActive) {
+  toggle() {
     this.element.classList.toggle("active");
+  }
+
+  isActive() {
+    return this.element.classList.contains("active");
+  }
+
+  getType() {
+    return this.currentState;
   }
 
   updateType(type) {
