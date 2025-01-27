@@ -58,6 +58,14 @@ const playerState = {
   IsBot: false,
 };
 
+function updateFromPlayerState() {
+  //Let this handle "active" indication of cards
+  //Let this handle "active" indication of tiles, requires a reverse-lookup of inputMap currently
+  for (i = 0; i < cardInstances.length; i++) {
+    cardInstances["bp" + i.toString()].updateType(playerState["Cards"][i]);
+  }
+}
+
 const gameState = {
   TurnLength: 15,
   TurnTime: 15,
@@ -157,6 +165,7 @@ async function updatePlayer() {
   for (const key in newState) {
     playerState[key] = newState[key];
   }
+  updateFromPlayerState();
 }
 
 async function updateConfig() {
