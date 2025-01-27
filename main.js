@@ -14,17 +14,7 @@ const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
 const tileInstances = {};
 
-const gameMap = {
-  NW: document.getElementById("NW"),
-  NN: document.getElementById("NN"),
-  NE: document.getElementById("NE"),
-  WW: document.getElementById("WW"),
-  CE: document.getElementById("CE"),
-  EE: document.getElementById("EE"),
-  SW: document.getElementById("SW"),
-  SS: document.getElementById("SS"),
-  SE: document.getElementById("SE"),
-};
+const directions = ["NW", "NN", "NE", "WW", "CE", "EE", "SW", "SS", "SE"];
 
 const inputMap = {
   NN: "north",
@@ -81,6 +71,7 @@ function deactiveAllTiles() {
 
 function cardClicked(event) {
   //Handle food, combat and uninteractive
+  event.target.id;
   return;
 }
 
@@ -98,11 +89,13 @@ function tileClicked(event) {
 
 startGameButton.addEventListener("click", startGame);
 
-Object.entries(gameMap).forEach(([key, val]) => //Don't want all tiles here
-  val.addEventListener("click", (event) => tileClicked(event)),
+directions.forEach((direction) =>
+  document
+    .getElementById(direction)
+    .addEventListener("click", (event) => tileClicked(event)),
 );
 
-allCards.forEach((card) => 
+allCards.forEach((card) =>
   card.addEventListener("click", (event) => cardClicked(event)),
 );
 
