@@ -61,7 +61,7 @@ const playerState = {
 function updateFromPlayerState() {
   //Let this handle "active" indication of cards
   //Let this handle "active" indication of tiles, requires a reverse-lookup of inputMap currently
-  for (i = 0; i < cardInstances.length; i++) {
+  for (var i = 0; i < Object.keys(cardInstances).length; i++) {
     cardInstances["bp" + i.toString()].updateType(playerState["Cards"][i]);
   }
 }
