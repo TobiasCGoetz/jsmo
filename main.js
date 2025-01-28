@@ -1,6 +1,6 @@
 import { GameAPI } from "./gapi.js";
 import { Tile } from "./tile.js";
-import { Card } from "./card.js";
+import { Card, findIdOfCardForType } from "./card.js";
 
 const updateSurroundingsInterval = 5000;
 const updatePlayerInterval = 1000;
@@ -33,16 +33,17 @@ const cardImages = {
   None: "img/none.jpg",
 };
 
-const inputMap = {
+const directionMap = {
   NN: "north",
   WW: "west",
   EE: "east",
   SS: "south",
   CE: "stay",
-  NW: null,
-  NE: null,
-  SW: null,
-  SE: null,
+  north: "NN",
+  west: "WW",
+  east: "EE",
+  south: "SS",
+  stay: "CE",
 };
 
 const playerState = {
@@ -64,6 +65,15 @@ function updateFromPlayerState() {
   for (var i = 0; i < Object.keys(cardInstances).length; i++) {
     cardInstances["bp" + i.toString()].updateType(playerState["Cards"][i]);
   }
+  deactivateAll(tileInstances);
+  deactivateAll(cardInstances);
+  tileInstances[directionMap[playerState["Direction"]]].setActive(true);
+  cardInstances[
+    findIdOfCardForType(cardInstances, playerState["Consume"])
+  ].toggle(); //TODO: Decide on setActive(bool) vs toggle()
+  cardInstances[
+    findIdOfCardForType(cardInstances, playerState["Play"])
+  ].toggle(); //TODO: Decide on setActive(bool) vs toggle()
 }
 
 const gameState = {
@@ -88,21 +98,21 @@ async function startGame() {
   setInterval(updateConfig, updateConfigInterval);
 }
 
-function deactiveAllTiles() {
-  for (const key in tileInstances) {
+function deactivateAll(instances) {
+  for (const key in instances) {
     tileInstances[key].setActive(false);
   }
 }
 
 function tileClicked(event) {
-  if (!inputMap[event.target.id]) {
+  if (!directionMap[event.target.id]) {
     return;
   }
-  deactiveAllTiles();
+  deactivateAll(tileInstances);
   tileInstances[event.target.id].setActive(true);
   //Send planned move to server
-  if (inputMap[event.target.id]) {
-    api.setPlayerDirection(inputMap[event.target.id]);
+  if (directionMap[event.target.id]) {
+    api.setPlayerDirection(directionMap[event.target.id]);
   }
 }
 
