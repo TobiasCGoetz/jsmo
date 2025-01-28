@@ -33,3 +33,12 @@ export class Card {
     setTimeout(() => (this.element.style.opacity = 1), 400);
   }
 }
+
+export function findIdOfCardForType(cardInstances, type) {
+  for (key in cardInstances) {
+    if (cardInstaces[key].getType() === type) {
+      return key;
+    }
+  }
+  return null;
+}
