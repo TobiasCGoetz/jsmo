@@ -67,13 +67,14 @@ function updateFromPlayerState() {
   }
   deactivateAll(tileInstances);
   deactivateAll(cardInstances);
-  tileInstances[directionMap[playerState["Direction"]]].setActive(true);
+  var heading = directionMap[playerState["Direction"].toLowerCase()];
+  tileInstances[heading].setActive(true);
   cardInstances[
     findIdOfCardForType(cardInstances, playerState["Consume"])
-  ].toggle(); //TODO: Decide on setActive(bool) vs toggle()
+  ].toggle();
   cardInstances[
     findIdOfCardForType(cardInstances, playerState["Play"])
-  ].toggle(); //TODO: Decide on setActive(bool) vs toggle()
+  ].toggle();
 }
 
 const gameState = {
@@ -100,7 +101,7 @@ async function startGame() {
 
 function deactivateAll(instances) {
   for (const key in instances) {
-    tileInstances[key].setActive(false);
+    instances[key].setActive(false);
   }
 }
 

@@ -10,6 +10,18 @@ export class Card {
     this.element.classList.toggle("active");
   }
 
+  setActive(isActive) {
+    if (!isActive) {
+      this.active = false;
+      this.element.classList.remove("active");
+      this.element.classList.add("inactive");
+    } else {
+      this.active = true;
+      this.element.classList.remove("inactive");
+      this.element.classList.add("active");
+    }
+  }
+
   isActive() {
     return this.element.classList.contains("active");
   }
@@ -35,7 +47,7 @@ export class Card {
 }
 
 export function findIdOfCardForType(cardInstances, type) {
-  for (key in cardInstances) {
+  for (const key in cardInstances) {
     if (cardInstances[key].getType() === type) {
       return key;
     }
