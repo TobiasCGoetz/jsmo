@@ -36,7 +36,7 @@ export class Card {
 
 export function findIdOfCardForType(cardInstances, type) {
   for (key in cardInstances) {
-    if (cardInstaces[key].getType() === type) {
+    if (cardInstances[key].getType() === type) {
       return key;
     }
   }
