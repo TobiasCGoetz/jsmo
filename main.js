@@ -12,6 +12,7 @@ const startGameOverlay = document.getElementById("gameStartOverlay");
 const startGameButton = document.getElementById("startGameButton");
 const nameField = document.getElementById("nameInput");
 const api = new GameAPI("http://localhost:8080");
+var label = document.getElementById("label");
 const tileInstances = {};
 const cardInstances = {};
 
@@ -75,6 +76,7 @@ function updateFromPlayerState() {
   cardInstances[
     findIdOfCardForType(cardInstances, playerState["Play"])
   ].toggle();
+  updateLabel();
 }
 
 const gameState = {
@@ -159,6 +161,14 @@ directions.forEach((direction) =>
 allCards.forEach((card) =>
   card.addEventListener("click", (event) => cardClicked(event)),
 );
+
+function updateLabel() {
+  const state = playerState["Alive"] ? "Alive" : "Undead";
+  const xPos = playerState["X"];
+  const yPos = playerState["Y"];
+  const newOutput = `${state} on tile ${xPos}|${yPos}`;
+  label.textContent = newOutput;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   allTiles.forEach((tileDiv) => {
