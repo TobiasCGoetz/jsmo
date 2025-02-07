@@ -98,3 +98,17 @@ body {
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
 }
+
+#label {
+    position: absolute; /* Needed for top positioning */
+    top: 20px; /* Adjust top distance as needed */
+    background-color: rgba(
+        255,
+        255,
+        255,
+        0.8
+    ); /* Optional: semi-transparent background */
+    padding: 5px 10px; /* Optional: add padding */
+    border-radius: 5px; /* Optional: rounded corners */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Optional: a subtle shadow */
+}
