@@ -71,7 +71,7 @@ function updateFromPlayerState() {
   var heading = directionMap[playerState["Direction"].toLowerCase()];
   tileInstances[heading].setActive(true);
   cardInstances[
-    findIdOfCardForType(cardInstances, playerState["Consume"])
+    findIdOfCardForType(cardInstances, playerState["Consume"]) //This currently breaks a lot
   ].toggle();
   cardInstances[
     findIdOfCardForType(cardInstances, playerState["Play"])
