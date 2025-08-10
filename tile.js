@@ -12,6 +12,42 @@ export class Tile {
     this.playersPlanMoveEast = 0;
     this.playersPlanMoveSouth = 0;
     this.playersPlanMoveWest = 0;
+    
+    // Create overlay elements for displaying counts
+    this.createOverlays();
+    
+    // Initialize overlay display
+    this.updateOverlays();
+  }
+
+  createOverlays() {
+    // Create container for overlays
+    this.overlayContainer = document.createElement('div');
+    this.overlayContainer.className = 'tile-overlays';
+    
+    // Create player count overlay
+    this.playerOverlay = document.createElement('div');
+    this.playerOverlay.className = 'tile-overlay player-count';
+    this.playerOverlay.textContent = 'P:0';
+    
+    // Create undead count overlay
+    this.undeadOverlay = document.createElement('div');
+    this.undeadOverlay.className = 'tile-overlay undead-count';
+    this.undeadOverlay.textContent = 'U:0';
+    
+    // Add overlays to container
+    this.overlayContainer.appendChild(this.playerOverlay);
+    this.overlayContainer.appendChild(this.undeadOverlay);
+    
+    // Add container to tile element
+    this.element.appendChild(this.overlayContainer);
+    
+    // Debug logging
+    console.log(`Created overlays for tile ${this.element.id}:`, {
+      container: this.overlayContainer,
+      playerOverlay: this.playerOverlay,
+      undeadOverlay: this.undeadOverlay
+    });
   }
 
   setActive(isActive) {
@@ -34,6 +70,23 @@ export class Tile {
     this.playersPlanMoveEast = content["PlayersPlanMoveEast"];
     this.playersPlanMoveSouth = content["PlayersPlanMoveSouth"];
     this.playersPlanMoveWest = content["PlayersPlanMoveWest"];
+    
+    // Update overlay displays
+    this.updateOverlays();
+  }
+
+  updateOverlays() {
+    if (this.playerOverlay) {
+      this.playerOverlay.textContent = `P:${this.playerCount}`;
+      // Always show overlay for debugging
+      this.playerOverlay.style.display = 'block';
+    }
+    
+    if (this.undeadOverlay) {
+      this.undeadOverlay.textContent = `U:${this.zombieCount}`;
+      // Always show overlay for debugging
+      this.undeadOverlay.style.display = 'block';
+    }
   }
 
   updateType(type) {
