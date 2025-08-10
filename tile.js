@@ -35,6 +35,11 @@ export class Tile {
     this.undeadOverlay.className = 'tile-overlay undead-count';
     this.undeadOverlay.textContent = 'U:0';
     
+    // Create planned move arrows only for central tile
+    if (this.element.id === 'CE') {
+      this.createPlannedMoveArrows();
+    }
+    
     // Add overlays to container
     this.overlayContainer.appendChild(this.playerOverlay);
     this.overlayContainer.appendChild(this.undeadOverlay);
@@ -48,6 +53,49 @@ export class Tile {
       playerOverlay: this.playerOverlay,
       undeadOverlay: this.undeadOverlay
     });
+  }
+
+  createPlannedMoveArrows() {
+    // Create container for arrows
+    this.arrowContainer = document.createElement('div');
+    this.arrowContainer.className = 'planned-move-arrows';
+    
+    // Create arrows for each direction
+    this.arrows = {
+      north: this.createArrow('north', '↑'),
+      east: this.createArrow('east', '→'),
+      south: this.createArrow('south', '↓'),
+      west: this.createArrow('west', '←')
+    };
+    
+    // Add arrows to container
+    Object.values(this.arrows).forEach(arrow => {
+      this.arrowContainer.appendChild(arrow.element);
+    });
+    
+    // Add arrow container to tile element
+    this.element.appendChild(this.arrowContainer);
+  }
+
+  createArrow(direction, symbol) {
+    const arrow = document.createElement('div');
+    arrow.className = `planned-move-arrow arrow-${direction}`;
+    
+    const arrowSymbol = document.createElement('span');
+    arrowSymbol.className = 'arrow-symbol';
+    arrowSymbol.textContent = symbol;
+    
+    const arrowCount = document.createElement('span');
+    arrowCount.className = 'arrow-count';
+    arrowCount.textContent = '0';
+    
+    arrow.appendChild(arrowSymbol);
+    arrow.appendChild(arrowCount);
+    
+    return {
+      element: arrow,
+      count: arrowCount
+    };
   }
 
   setActive(isActive) {
@@ -87,6 +135,29 @@ export class Tile {
       // Always show overlay for debugging
       this.undeadOverlay.style.display = 'block';
     }
+    
+    // Update planned move arrows
+    this.updatePlannedMoveArrows();
+  }
+
+  updatePlannedMoveArrows() {
+    if (!this.arrows) return;
+    
+    // Update arrow counts and visibility
+    const moves = {
+      north: this.playersPlanMoveNorth,
+      east: this.playersPlanMoveEast,
+      south: this.playersPlanMoveSouth,
+      west: this.playersPlanMoveWest
+    };
+    
+    Object.entries(moves).forEach(([direction, count]) => {
+      if (this.arrows[direction]) {
+        this.arrows[direction].count.textContent = count;
+        // Show arrow only if there are planned moves
+        this.arrows[direction].element.style.display = count > 0 ? 'flex' : 'none';
+      }
+    });
   }
 
   updateType(type) {

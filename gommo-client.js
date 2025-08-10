@@ -62,11 +62,6 @@ class GommoClient {
             
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': requestId.toString(),
-                    ...options.headers
-                },
                 body: options.body ? JSON.stringify(options.body) : undefined,
                 signal: controller.signal
             });
