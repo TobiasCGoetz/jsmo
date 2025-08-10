@@ -1,0 +1,17 @@
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Development files
+README.md
+Makefile
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
