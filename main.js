@@ -8,12 +8,16 @@ const CONFIG = {
   SERVER_URL: "http://localhost:8080",
   POLLING_INTERVALS: {
     PLAYER: 1000,
-    SURROUNDINGS: 5000,
-    CONFIG: 2000
+    SURROUNDINGS: 2000, // Reduced for better responsiveness
+    CONFIG: 3000
   },
   DEFAULT_CARDS: ["None", "None", "None", "None", "None"],
   MAX_RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000
+  RETRY_DELAY: 1000,
+  // New configuration options
+  DEBOUNCE_DELAY: 100,
+  CONNECTION_TIMEOUT: 5000,
+  MAX_CONSECUTIVE_ERRORS: 5
 };
 
 // ===== DOM ELEMENTS =====
@@ -33,6 +37,17 @@ const instances = {
   tiles: {},
   cards: {}
 };
+
+// Enhanced state tracking
+const connectionState = {
+  isConnected: false,
+  consecutiveErrors: 0,
+  lastSuccessfulUpdate: null,
+  reconnectAttempts: 0
+};
+
+// Debounce tracking
+let updateDebounceTimer = null;
 
 // ===== CONSTANTS =====
 const DIRECTIONS = ["NW", "NN", "NE", "WW", "CE", "EE", "SW", "SS", "SE"];
@@ -199,6 +214,63 @@ function findCardIdByType(cardType) {
 // ===== UTILITY FUNCTIONS =====
 
 /**
+ * Debounced version of updateSurroundingsData to prevent excessive API calls
+ */
+function debouncedUpdateSurroundings() {
+  if (updateDebounceTimer) {
+    clearTimeout(updateDebounceTimer);
+  }
+  
+  updateDebounceTimer = setTimeout(() => {
+    updateSurroundingsData();
+    updateDebounceTimer = null;
+  }, CONFIG.DEBOUNCE_DELAY);
+}
+
+/**
+ * Handles connection errors and implements recovery strategies
+ */
+function handleConnectionError() {
+  console.warn('Connection error detected, attempting recovery...');
+  
+  connectionState.isConnected = false;
+  connectionState.reconnectAttempts++;
+  
+  // Show user feedback
+  showUserMessage('Connection issues detected - attempting to reconnect', 'error');
+  
+  // Attempt to restart polling if client exists
+  if (gameClient && currentPlayerId && connectionState.reconnectAttempts < CONFIG.MAX_RETRY_ATTEMPTS) {
+    setTimeout(() => {
+      try {
+        gameClient.stopPolling();
+        gameClient.startPolling(currentPlayerId);
+        console.log('Polling restarted after connection error');
+      } catch (error) {
+        console.error('Failed to restart polling:', error);
+      }
+    }, CONFIG.RETRY_DELAY * connectionState.reconnectAttempts);
+  }
+}
+
+/**
+ * Enhanced validation for tile data
+ * @param {Object} tileData - Tile data to validate
+ * @returns {boolean} Whether the tile data is valid
+ */
+function validateTileData(tileData) {
+  if (!tileData || typeof tileData !== 'object') {
+    return false;
+  }
+  
+  const requiredFields = ['TileType', 'ZombieCount', 'PlayerCount'];
+  return requiredFields.every(field => 
+    tileData.hasOwnProperty(field) && 
+    typeof tileData[field] !== 'undefined'
+  );
+}
+
+/**
  * Shows or hides the game start overlay
  * @param {boolean} show - Whether to show the overlay
  */
@@ -209,13 +281,21 @@ function toggleGameOverlay(show = false) {
 }
 
 /**
- * Displays a user message (could be extended to show toast notifications)
+ * Displays a user message with enhanced logging and potential UI feedback
  * @param {string} message - The message to display
- * @param {string} type - Message type ('info', 'error', 'success')
+ * @param {string} type - Message type ('info', 'error', 'success', 'warning')
  */
 function showUserMessage(message, type = 'info') {
-  console.log(`[${type.toUpperCase()}] ${message}`);
-  // Could be extended to show toast notifications or update a status area
+  const timestamp = new Date().toISOString();
+  const logLevel = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+  
+  console[logLevel](`[${timestamp}] [${type.toUpperCase()}] ${message}`);
+  
+  // Enhanced: Could integrate with toast notification system
+  // or update a status indicator in the UI
+  if (type === 'error' && connectionState.consecutiveErrors > 2) {
+    console.warn('Multiple consecutive errors detected - connection may be unstable');
+  }
 }
 
 /**
@@ -326,21 +406,39 @@ async function initializeGameState() {
 }
 
 /**
- * Handles state changes from the GommoClient
+ * Handles state changes from the GommoClient with debouncing and validation
  * @param {Object} newState - Updated state from the client
  */
 function handleStateChange(newState) {
   try {
+    // Validate input
+    if (!newState || typeof newState !== 'object') {
+      console.warn('Invalid state change data received');
+      return;
+    }
+    
+    // Update player state if provided
     if (newState.player) {
       updatePlayerState(newState.player);
       updateUIFromPlayerState();
     }
     
+    // Update game state if provided
     if (newState.gameState) {
       updateGameState(newState.gameState);
     }
+    
+    // Debounced surroundings update to prevent excessive API calls
+    debouncedUpdateSurroundings();
+    
+    // Update connection state
+    connectionState.isConnected = true;
+    connectionState.consecutiveErrors = 0;
+    
   } catch (error) {
     console.error('Error handling state change:', error);
+    connectionState.consecutiveErrors++;
+    showUserMessage('State update failed', 'error');
   }
 }
 
@@ -686,50 +784,82 @@ async function updateGameConfig(retryCount = 0) {
 }
 
 /**
- * Updates surroundings data from the server
+ * Updates surroundings data from the server with enhanced error handling
  * @param {number} retryCount - Current retry attempt
  */
 async function updateSurroundingsData(retryCount = 0) {
   if (!gameClient || !currentPlayerId) {
+    console.warn('Cannot update surroundings: missing client or player ID');
     return;
   }
   
   try {
     const surroundings = await gameClient.getPlayerSurroundings(currentPlayerId);
     
+    // Validate response
+    if (!surroundings || typeof surroundings !== 'object') {
+      throw new Error('Invalid surroundings data received');
+    }
+    
     // Update each tile with new data
+    let successfulUpdates = 0;
     Object.entries(surroundings).forEach(([tileId, tileData]) => {
-      updateTileDisplay(tileId, tileData);
+      try {
+        updateTileDisplay(tileId, tileData);
+        successfulUpdates++;
+      } catch (tileError) {
+        console.warn(`Failed to update tile ${tileId}:`, tileError);
+      }
     });
     
-  } catch (error) {
-    console.error('Failed to update surroundings:', error.message);
+    // Track successful update
+    connectionState.consecutiveErrors = 0;
+    connectionState.lastSuccessfulUpdate = Date.now();
     
-    // Retry logic
-    if (retryCount < CONFIG.MAX_RETRY_ATTEMPTS) {
-      console.log(`Retrying surroundings update (${retryCount + 1}/${CONFIG.MAX_RETRY_ATTEMPTS})...`);
-      setTimeout(() => updateSurroundingsData(retryCount + 1), CONFIG.RETRY_DELAY);
+    console.debug(`Updated ${successfulUpdates}/${Object.keys(surroundings).length} tiles`);
+    
+  } catch (error) {
+    connectionState.consecutiveErrors++;
+    console.error(`Failed to update surroundings (attempt ${retryCount + 1}):`, error.message);
+    
+    // Enhanced retry logic with exponential backoff
+    if (retryCount < CONFIG.MAX_RETRY_ATTEMPTS && connectionState.consecutiveErrors < CONFIG.MAX_CONSECUTIVE_ERRORS) {
+      const backoffDelay = CONFIG.RETRY_DELAY * Math.pow(2, retryCount);
+      console.log(`Retrying surroundings update in ${backoffDelay}ms...`);
+      setTimeout(() => updateSurroundingsData(retryCount + 1), backoffDelay);
     } else {
-      showUserMessage('Failed to update surroundings', 'error');
+      showUserMessage('Failed to update surroundings - connection issues detected', 'error');
+      handleConnectionError();
     }
   }
 }
 
 /**
- * Updates a specific tile display with new content
+ * Updates a specific tile display with new content and validation
  * @param {string} tileId - ID of the tile to update
  * @param {Object} tileData - New tile data
  */
 function updateTileDisplay(tileId, tileData) {
   try {
+    // Validate inputs
+    if (!tileId || typeof tileId !== 'string') {
+      throw new Error('Invalid tile ID provided');
+    }
+    
+    if (!validateTileData(tileData)) {
+      throw new Error('Invalid tile data provided');
+    }
+    
     const tileInstance = instances.tiles[tileId];
     if (tileInstance && typeof tileInstance.updateByContent === 'function') {
       tileInstance.updateByContent(tileData);
+      console.debug(`Successfully updated tile ${tileId}`);
     } else {
       console.warn(`Tile instance not found or invalid: ${tileId}`);
     }
   } catch (error) {
-    console.error(`Failed to update tile ${tileId}:`, error);
+    console.error(`Failed to update tile ${tileId}:`, error.message);
+    throw error; // Re-throw to allow caller to handle
   }
 }
 
@@ -760,7 +890,7 @@ window.addEventListener('beforeunload', cleanup);
 // ===== DEBUGGING AND DEVELOPMENT HELPERS =====
 
 /**
- * Development helper to inspect current state
+ * Enhanced development helper to inspect current state
  * Available in browser console as window.debugGameState()
  */
 function debugGameState() {
@@ -768,12 +898,15 @@ function debugGameState() {
   console.log('Player State:', state.player);
   console.log('Game State:', state.game);
   console.log('UI State:', state.ui);
+  console.log('Connection State:', connectionState);
   console.log('Client Connected:', !!gameClient);
   console.log('Player ID:', currentPlayerId);
   console.log('Tile Instances:', Object.keys(instances.tiles));
   console.log('Card Instances:', Object.keys(instances.cards));
+  console.log('Last Successful Update:', connectionState.lastSuccessfulUpdate ? new Date(connectionState.lastSuccessfulUpdate).toISOString() : 'Never');
+  console.log('Consecutive Errors:', connectionState.consecutiveErrors);
   console.groupEnd();
-  return state;
+  return { state, connectionState, instances };
 }
 
 // Make debug function available globally in development

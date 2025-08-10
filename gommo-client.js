@@ -30,6 +30,17 @@ class GommoClient {
         this._lastGameState = null;
         this._lastPlayerState = null;
         this._eventListeners = new Map();
+        
+        // Enhanced connection tracking
+        this._connectionHealth = {
+            consecutiveFailures: 0,
+            lastSuccessTime: null,
+            isHealthy: true
+        };
+        
+        // Request queue for retry management
+        this._requestQueue = new Map();
+        this._requestId = 0;
     }
 
     /**
@@ -42,14 +53,18 @@ class GommoClient {
      */
     async _request(method, path, options = {}) {
         const url = `${this.baseUrl}${path}`;
+        const requestId = ++this._requestId;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
         try {
+            const startTime = Date.now();
+            
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Request-ID': requestId.toString(),
                     ...options.headers
                 },
                 body: options.body ? JSON.stringify(options.body) : undefined,
@@ -57,8 +72,11 @@ class GommoClient {
             });
 
             clearTimeout(timeoutId);
-
+            
+            const responseTime = Date.now() - startTime;
+            
             if (!response.ok) {
+                this._updateConnectionHealth(false);
                 const errorText = await response.text();
                 throw new GommoError(
                     `HTTP ${response.status}: ${response.statusText}`,
@@ -67,18 +85,42 @@ class GommoClient {
                 );
             }
 
+            // Update connection health on success
+            this._updateConnectionHealth(true);
+            
             const contentType = response.headers.get('content-type');
+            let result;
             if (contentType && contentType.includes('application/json')) {
-                return await response.json();
+                result = await response.json();
             } else {
-                return await response.text();
+                result = await response.text();
             }
+            
+            // Log performance for monitoring
+            if (responseTime > 1000) {
+                console.warn(`Slow request detected: ${method} ${path} took ${responseTime}ms`);
+            }
+            
+            return result;
+            
         } catch (error) {
             clearTimeout(timeoutId);
+            this._updateConnectionHealth(false);
+            
             if (error.name === 'AbortError') {
                 throw new GommoError('Request timeout', 408, 'Request timed out');
             }
-            throw error;
+            
+            // Enhanced error context
+            if (error instanceof GommoError) {
+                throw error;
+            } else {
+                throw new GommoError(
+                    `Network error: ${error.message}`,
+                    0,
+                    { originalError: error.name, requestId }
+                );
+            }
         }
     }
 
@@ -425,25 +467,47 @@ class GommoClient {
     dispose() {
         this.stopPolling();
         this._eventListeners.clear();
+        this._requestQueue.clear();
+        
+        // Reset connection health
+        this._connectionHealth = {
+            consecutiveFailures: 0,
+            lastSuccessTime: null,
+            isHealthy: true
+        };
+        
+        console.log('GommoClient disposed successfully');
     }
 
     // ===== PRIVATE HELPER METHODS =====
 
     async _triggerStateUpdate(playerId) {
         try {
+            // Validate player ID
+            if (!playerId) {
+                throw new GommoError('Player ID is required for state update', 400);
+            }
+            
             const currentState = await this.getUIPlayerState(playerId);
             
-            // Check for significant changes
-            const hasChanges = !this._lastPlayerState || 
+            // Validate response
+            if (!currentState || typeof currentState !== 'object') {
+                throw new GommoError('Invalid state data received from server', 500);
+            }
+            
+            // Check for significant changes for special event handling
+            const hasSignificantChanges = !this._lastPlayerState || 
                 this._lastPlayerState.player.position.x !== currentState.player.position.x ||
                 this._lastPlayerState.player.position.y !== currentState.player.position.y ||
                 this._lastPlayerState.player.alive !== currentState.player.alive ||
                 this._lastPlayerState.gameState.remainingTurns !== currentState.gameState.remainingTurns;
             
-            if (hasChanges) {
-                // Emit events
-                this._emitEvent('stateChange', currentState);
-                
+            // Always emit state change to ensure UI stays fresh
+            // This prevents stale tile data and ensures all changes are captured
+            this._emitEvent('stateChange', currentState);
+            
+            // Handle special events only when there are significant changes
+            if (hasSignificantChanges) {
                 if (this._lastPlayerState && this._lastPlayerState.player.alive && !currentState.player.alive) {
                     this._emitEvent('playerDeath', currentState);
                 }
@@ -451,19 +515,24 @@ class GommoClient {
                 if (currentState.gameState.havePlayersWon) {
                     this._emitEvent('gameWon', currentState);
                 }
-                
-                // Update cached state
-                this._lastPlayerState = currentState;
-                
-                // Call global state change callback
-                if (this.onStateChange) {
-                    this.onStateChange(currentState);
-                }
+            }
+            
+            // Always update cached state and call state change callback
+            this._lastPlayerState = currentState;
+            
+            // Always call global state change callback to ensure UI updates
+            if (this.onStateChange) {
+                this.onStateChange(currentState);
             }
             
         } catch (error) {
+            console.error('State update failed:', error.message);
             this._emitEvent('error', error);
-            throw error;
+            
+            // Don't re-throw if it's a connection issue - let polling continue
+            if (error.statusCode !== 0 && error.statusCode !== 408) {
+                throw error;
+            }
         }
     }
 
@@ -556,6 +625,17 @@ class GommoClient {
         }
         
         return recommendations;
+    }
+
+    _updateConnectionHealth(success) {
+        if (success) {
+            this._connectionHealth.consecutiveFailures = 0;
+            this._connectionHealth.lastSuccessTime = Date.now();
+            this._connectionHealth.isHealthy = true;
+        } else {
+            this._connectionHealth.consecutiveFailures++;
+            this._connectionHealth.isHealthy = this._connectionHealth.consecutiveFailures < 3;
+        }
     }
 
     _emitEvent(eventType, data) {
