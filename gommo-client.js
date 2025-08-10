@@ -333,7 +333,15 @@ class GommoClient {
                 }
             },
             surroundings: this._formatSurroundings(surroundings),
-            gameState: await this.getGameState()
+            gameState: await this.getGameState(),
+            events: {
+                getRecent: (turns = 5) => this.getPlayerEvents(playerId, { turns }),
+                getByType: (eventType, turns = 5) => this.getPlayerEventsByType(playerId, eventType, { turns }),
+                getCombat: (turns = 5) => this.getPlayerCombatEvents(playerId, turns),
+                getMovement: (turns = 5) => this.getPlayerMovementEvents(playerId, turns),
+                getCardUsage: (turns = 5) => this.getPlayerCardEvents(playerId, turns),
+                subscribe: (options) => this.subscribeToPlayerEvents(playerId, options)
+            }
         };
     }
 
@@ -430,8 +438,159 @@ class GommoClient {
     }
 
     /**
+     * Get recent events for a player
+     * @param {string} playerId - Player ID
+     * @param {Object} options - Optional parameters
+     * @param {number} options.turns - Number of recent turns to get events for (default: 5)
+     * @returns {Promise<Object>} Events data with events array and count
+     */
+    async getPlayerEvents(playerId, options = {}) {
+        const params = new URLSearchParams();
+        if (options.turns !== undefined) {
+            params.append('turns', options.turns.toString());
+        }
+        
+        const queryString = params.toString();
+        const path = `/player/${playerId}/events${queryString ? '?' + queryString : ''}`;
+        
+        try {
+            const result = await this._request('GET', path);
+            
+            // Emit event for real-time updates
+            this._emitEvent('eventsReceived', {
+                playerId,
+                events: result.data.events,
+                count: result.data.count
+            });
+            
+            return result.data;
+        } catch (error) {
+            this._handleError('getPlayerEvents', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get filtered events by type for a player
+     * @param {string} playerId - Player ID
+     * @param {string} eventType - Event type to filter by
+     * @param {Object} options - Optional parameters
+     * @param {number} options.turns - Number of recent turns to get events for (default: 5)
+     * @returns {Promise<Object>} Filtered events data
+     */
+    async getPlayerEventsByType(playerId, eventType, options = {}) {
+        const params = new URLSearchParams();
+        if (options.turns !== undefined) {
+            params.append('turns', options.turns.toString());
+        }
+        
+        const queryString = params.toString();
+        const path = `/player/${playerId}/events/type/${eventType}${queryString ? '?' + queryString : ''}`;
+        
+        try {
+            const result = await this._request('GET', path);
+            
+            // Emit event for real-time updates
+            this._emitEvent('filteredEventsReceived', {
+                playerId,
+                eventType,
+                events: result.data.events,
+                count: result.data.count
+            });
+            
+            return result.data;
+        } catch (error) {
+            this._handleError('getPlayerEventsByType', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get recent combat events for a player
+     * @param {string} playerId - Player ID
+     * @param {number} turns - Number of recent turns (default: 5)
+     * @returns {Promise<Object>} Combat events data
+     */
+    async getPlayerCombatEvents(playerId, turns = 5) {
+        return this.getPlayerEventsByType(playerId, 'combat_result', { turns });
+    }
+
+    /**
+     * Get recent movement events for a player
+     * @param {string} playerId - Player ID
+     * @param {number} turns - Number of recent turns (default: 5)
+     * @returns {Promise<Object>} Movement events data
+     */
+    async getPlayerMovementEvents(playerId, turns = 5) {
+        return this.getPlayerEventsByType(playerId, 'player_move', { turns });
+    }
+
+    /**
+     * Get recent card usage events for a player
+     * @param {string} playerId - Player ID
+     * @param {number} turns - Number of recent turns (default: 5)
+     * @returns {Promise<Object>} Card usage events data
+     */
+    async getPlayerCardEvents(playerId, turns = 5) {
+        return this.getPlayerEventsByType(playerId, 'card_usage', { turns });
+    }
+
+    /**
+     * Subscribe to real-time events for a player
+     * @param {string} playerId - Player ID
+     * @param {Object} options - Subscription options
+     * @param {number} options.interval - Polling interval in milliseconds (default: 2000)
+     * @param {number} options.turns - Number of recent turns to monitor (default: 1)
+     * @param {Function} options.onNewEvents - Callback for new events
+     * @returns {Function} Unsubscribe function
+     */
+    subscribeToPlayerEvents(playerId, options = {}) {
+        const interval = options.interval || 2000;
+        const turns = options.turns || 1;
+        const onNewEvents = options.onNewEvents || (() => {});
+        
+        let lastEventCount = 0;
+        let isActive = true;
+        
+        const pollEvents = async () => {
+            if (!isActive) return;
+            
+            try {
+                const eventsData = await this.getPlayerEvents(playerId, { turns });
+                
+                // Check if there are new events
+                if (eventsData.count > lastEventCount) {
+                    const newEvents = eventsData.events.slice(lastEventCount);
+                    lastEventCount = eventsData.count;
+                    
+                    onNewEvents(newEvents);
+                    this._emitEvent('newPlayerEvents', {
+                        playerId,
+                        newEvents,
+                        totalCount: eventsData.count
+                    });
+                }
+            } catch (error) {
+                console.warn('Error polling player events:', error);
+            }
+            
+            if (isActive) {
+                setTimeout(pollEvents, interval);
+            }
+        };
+        
+        // Start polling
+        pollEvents();
+        
+        // Return unsubscribe function
+        return () => {
+            isActive = false;
+        };
+    }
+
+    /**
      * Add event listener for game events
-     * @param {string} event - Event type ('stateChange', 'playerDeath', 'gameWon', 'error')
+     * @param {string} event - Event type ('stateChange', 'playerDeath', 'gameWon', 'error', 'eventsReceived', 'filteredEventsReceived', 'newPlayerEvents')
      * @param {Function} callback - Event handler
      */
     addEventListener(event, callback) {
@@ -685,6 +844,35 @@ const GommoConstants = {
         CITY: 'City',
         LABORATORY: 'Laboratory',
         EDGE: 'Edge'
+    },
+    
+    EVENT_TYPES: {
+        PLAYER_JOIN: 'player_join',
+        PLAYER_MOVE: 'player_move',
+        CARD_USAGE: 'card_usage',
+        PLAYER_DEATH: 'player_death',
+        COMBAT_RESULT: 'combat_result',
+        RESOURCE_GAINED: 'resource_gained',
+        GAME_TICK: 'game_tick',
+        CARD_PLAYED: 'card_played',
+        CARD_USED: 'card_used',
+        CARD_SELECTED: 'card_selected',
+        CARD_CONSUMED: 'card_consumed',
+        DICE_ROLL: 'dice_roll',
+        COMBAT_START: 'combat_start',
+        ZOMBIE_SPAWN: 'zombie_spawn',
+        CARD_DRAWN: 'card_drawn',
+        CARD_DISCARDED: 'card_discarded'
+    },
+    
+    CLIENT_EVENTS: {
+        STATE_CHANGE: 'stateChange',
+        PLAYER_DEATH: 'playerDeath',
+        GAME_WON: 'gameWon',
+        ERROR: 'error',
+        EVENTS_RECEIVED: 'eventsReceived',
+        FILTERED_EVENTS_RECEIVED: 'filteredEventsReceived',
+        NEW_PLAYER_EVENTS: 'newPlayerEvents'
     }
 };
 
