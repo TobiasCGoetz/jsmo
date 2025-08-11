@@ -305,9 +305,110 @@ function updateStatusLabel() {
   if (!DOM.label) return;
   
   const { alive, position } = state.player;
-  const status = alive ? "Alive" : "Undead";
   const location = `${position.x}|${position.y}`;
-  DOM.label.textContent = `${status} on tile ${location}`;
+  
+  console.log('updateStatusLabel called - alive:', alive, 'location:', location);
+  
+  if (alive) {
+    DOM.label.textContent = `Alive on tile ${location}`;
+  } else {
+    // For undead players, show basic label first, then fetch last turn info
+    DOM.label.textContent = `Undead on tile ${location}`;
+    console.log('Player is undead, fetching last turn info...');
+    
+    // Fetch and display last turn information
+    if (gameClient && currentPlayerId) {
+      console.log('gameClient and currentPlayerId available, calling fetchLastTurnInfo');
+      fetchLastTurnInfo(currentPlayerId, location);
+    } else {
+      console.warn('gameClient or currentPlayerId not available:', { gameClient: !!gameClient, currentPlayerId });
+    }
+  }
+}
+
+/**
+ * Fetches and displays last turn information for undead players
+ * @param {string} playerId - The player's ID
+ * @param {string} location - The tile location string
+ */
+function fetchLastTurnInfo(playerId, location) {
+  console.log('fetchLastTurnInfo called with playerId:', playerId, 'location:', location);
+  
+  // Use bind to ensure proper context or call the method directly with proper this binding
+  const getPlayerEventsMethod = gameClient.getPlayerEvents.bind(gameClient);
+  getPlayerEventsMethod(playerId, { turns: 2 })
+    .then(eventsData => {
+      console.log('Events data received:', eventsData);
+      
+      if (!eventsData.events || eventsData.events.length === 0) {
+        console.log('No events found, keeping basic label');
+        return;
+      }
+      
+      // Sort events by turn number (most recent first)
+      const sortedEvents = eventsData.events.sort((a, b) => b.Turn - a.Turn);
+      console.log('Sorted events:', sortedEvents);
+      
+      // Find the most recent turn's events
+      const lastTurn = sortedEvents[0].Turn;
+      const lastTurnEvents = sortedEvents.filter(event => event.Turn === lastTurn);
+      console.log('Last turn events:', lastTurnEvents);
+      
+      // Build description based on events in the last turn
+      const descriptions = [];
+      
+      // Check for combat events first (most important)
+      const combatEvents = lastTurnEvents.filter(event => event.EventType === 'combat_result');
+      if (combatEvents.length > 0) {
+        const combatResult = combatEvents.find(event => event.EventData && event.EventData.result);
+        if (combatResult) {
+          descriptions.push(combatResult.EventData.result === 'victory' ? 'won combat' : 'lost combat');
+        } else {
+          descriptions.push('fought');
+        }
+      }
+      
+      // Check for movement
+      const moveEvent = lastTurnEvents.find(event => event.EventType === 'player_move');
+      if (moveEvent && moveEvent.EventData) {
+        const direction = moveEvent.EventData.direction || moveEvent.EventData.Direction;
+        if (direction && direction !== 'stay') {
+          descriptions.push(`moved ${direction}`);
+        }
+      }
+      
+      // Check for card usage
+      const cardEvents = lastTurnEvents.filter(event => 
+        event.EventType === 'card_played' || 
+        event.EventType === 'card_consumed' || 
+        event.EventType === 'card_usage'
+      );
+      
+      if (cardEvents.length > 0) {
+        const cardEvent = cardEvents[0];
+        const cardType = cardEvent.EventData?.card_type || cardEvent.EventData?.CardType || 'card';
+        const action = cardEvent.EventType === 'card_consumed' ? 'consumed' : 'played';
+        descriptions.push(`${action} ${cardType}`);
+      }
+      
+      console.log('Generated descriptions:', descriptions);
+      
+      // Update the label with the detailed information
+      if (descriptions.length > 0) {
+        const lastTurnInfo = descriptions.join(' and ');
+        const newLabelText = `Undead on tile ${location} - ${lastTurnInfo}`;
+        console.log('Updating label to:', newLabelText);
+        DOM.label.textContent = newLabelText;
+      } else {
+        const newLabelText = `Undead on tile ${location} - completed turn ${lastTurn}`;
+        console.log('Updating label to:', newLabelText);
+        DOM.label.textContent = newLabelText;
+      }
+    })
+    .catch(error => {
+      console.error('Failed to fetch last turn info:', error);
+      // Keep the basic undead label if fetching fails
+    });
 }
 
 /**
@@ -493,7 +594,9 @@ function updateGameState(gameData) {
  * @param {Event} event - Click event
  */
 async function handleTileClick(event) {
-  const tileId = event.target.id;
+  // Use currentTarget to get the tile element, not the clicked child element
+  const tileElement = event.currentTarget;
+  const tileId = tileElement.id;
   const direction = DIRECTION_MAP[tileId];
   
   if (!direction || !gameClient || !currentPlayerId) {
@@ -535,7 +638,9 @@ async function handleTileClick(event) {
  * @param {Event} event - Click event
  */
 async function handleCardClick(event) {
-  const cardId = event.target.id;
+  // Use currentTarget to get the card element, not the clicked child element
+  const cardElement = event.currentTarget;
+  const cardId = cardElement.id;
   const card = instances.cards[cardId];
   
   if (!card || !gameClient || !currentPlayerId) {
@@ -852,7 +957,9 @@ function updateTileDisplay(tileId, tileData) {
     
     const tileInstance = instances.tiles[tileId];
     if (tileInstance && typeof tileInstance.updateByContent === 'function') {
-      tileInstance.updateByContent(tileData);
+      // Pass player direction for direction-aware flip animations
+      const playerDirection = state.player.direction;
+      tileInstance.updateByContent(tileData, playerDirection);
       console.debug(`Successfully updated tile ${tileId}`);
     } else {
       console.warn(`Tile instance not found or invalid: ${tileId}`);

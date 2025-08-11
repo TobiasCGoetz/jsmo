@@ -5,19 +5,45 @@ export class Tile {
     this.active = false;
 
     this.currentState = "";
-    this.updateType("EDGE");
     this.zombieCount = 0;
     this.playerCount = 0;
     this.playersPlanMoveNorth = 0;
     this.playersPlanMoveEast = 0;
     this.playersPlanMoveSouth = 0;
     this.playersPlanMoveWest = 0;
+    this.isFlipping = false;
+    
+    // Create flip structure
+    this.createFlipStructure();
+    
+    // Initialize with EDGE type
+    this.updateType("EDGE");
     
     // Create overlay elements for displaying counts
     this.createOverlays();
     
     // Initialize overlay display
     this.updateOverlays();
+  }
+
+  createFlipStructure() {
+    // Create flipper container
+    this.flipper = document.createElement('div');
+    this.flipper.className = 'tile-flipper';
+    
+    // Create front and back faces
+    this.frontFace = document.createElement('div');
+    this.frontFace.className = 'tile-face tile-front';
+    
+    this.backFace = document.createElement('div');
+    this.backFace.className = 'tile-face tile-back';
+    
+    // Add faces to flipper
+    this.flipper.appendChild(this.frontFace);
+    this.flipper.appendChild(this.backFace);
+    
+    // Add flipper to tile element
+    this.element.appendChild(this.flipper);
   }
 
   createOverlays() {
@@ -110,8 +136,25 @@ export class Tile {
     }
   }
 
-  updateByContent(content) {
-    this.updateType(content["TileType"]);
+  updateByContent(content, playerDirection = null) {
+    // Only trigger flip animation for surroundings updates (when tile already has a state)
+    const newType = content["TileType"];
+    
+    // Prevent multiple updates if already flipping
+    if (this.isFlipping) {
+      console.log(`Tile ${this.element.id} is already flipping, skipping update`);
+      return;
+    }
+    
+    if (this.currentState && this.currentState !== newType) {
+      console.log(`Tile ${this.element.id} changing from ${this.currentState} to ${newType} with direction ${playerDirection}`);
+      this.updateType(newType, playerDirection);
+    } else if (!this.currentState) {
+      // Initial setup - no animation
+      this.frontFace.style.backgroundImage = `url(${this.images[newType]})`;
+      this.currentState = newType;
+    }
+    
     this.zombieCount = content["ZombieCount"];
     this.playerCount = content["PlayerCount"];
     this.playersPlanMoveNorth = content["PlayersPlanMoveNorth"];
@@ -160,17 +203,81 @@ export class Tile {
     });
   }
 
-  updateType(type) {
-    if (this.currentState == type) {
+  updateType(type, direction = null) {
+    if (this.currentState === type) {
       return;
     }
-    this.element.style.backgroundImage = `url(${this.images[type]})`;
-    this.flash();
-    this.currentState = type;
+    
+    // If this is the initial setup, just set the front face
+    if (!this.currentState) {
+      this.frontFace.style.backgroundImage = `url(${this.images[type]})`;
+      this.currentState = type;
+      return;
+    }
+    
+    // Prevent multiple simultaneous flips
+    if (this.isFlipping) {
+      return;
+    }
+    
+    this.performFlipAnimation(type, direction);
+  }
+  
+  performFlipAnimation(newType, direction = null) {
+    this.isFlipping = true;
+    
+    // Set the new image on the back face
+    this.backFace.style.backgroundImage = `url(${this.images[newType]})`;
+    
+    // Determine flip direction class based on player movement
+    let flipClass = 'flipping-east'; // Default to east (left-to-right)
+    if (direction) {
+      const normalizedDirection = direction.toLowerCase();
+      switch (normalizedDirection) {
+        case 'north':
+          flipClass = 'flipping-north';
+          break;
+        case 'south':
+          flipClass = 'flipping-south';
+          break;
+        case 'east':
+          flipClass = 'flipping-east';
+          break;
+        case 'west':
+          flipClass = 'flipping-west';
+          break;
+        default:
+          flipClass = 'flipping-east';
+      }
+    }
+    
+    // Add random delay between 0-200ms for organic feel
+    const randomDelay = Math.random() * 200;
+    
+    setTimeout(() => {
+      // Start the flip animation with direction-specific class
+      this.flipper.classList.add(flipClass);
+      
+      // After animation completes, swap the faces and reset
+      setTimeout(() => {
+        // First, update the current state
+        this.currentState = newType;
+        
+        // Swap the images: put new image on front, old on back
+        this.frontFace.style.backgroundImage = `url(${this.images[newType]})`;
+        this.backFace.style.backgroundImage = `url(${this.images[this.currentState]})`;
+        
+        // Remove the flip class to reset the animation
+        this.flipper.classList.remove(flipClass);
+        
+        // Mark as no longer flipping
+        this.isFlipping = false;
+      }, 600); // Match CSS transition duration
+    }, randomDelay);
   }
 
   flash() {
-    this.element.style.opacity = 0.2;
-    setTimeout(() => (this.element.style.opacity = 1), 400);
+    // Flash effect is now handled by the flip animation
+    // Keep this method for compatibility
   }
 }
